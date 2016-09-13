@@ -245,6 +245,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
 
     /**
      * The load factor used when none specified in constructor.
+     * 默认缺省加载因子
      */
     static final float DEFAULT_LOAD_FACTOR = 0.75f;
 
@@ -255,6 +256,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      * than 2 and should be at least 8 to mesh with assumptions in
      * tree removal about conversion back to plain bins upon
      * shrinkage.
+     * 链表 转换成 Tree 的门限值， 当链表长度大于该门限值时，将链表转换成Tree，提高查询效率
      */
     static final int TREEIFY_THRESHOLD = 8;
 
@@ -276,6 +278,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     /**
      * Basic hash bin node, used for most entries.  (See below for
      * TreeNode subclass, and in LinkedHashMap for its Entry subclass.)
+     * 链表节点
      */
     static class Node<K,V> implements Map.Entry<K,V> {
         final int hash;
@@ -375,6 +378,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
 
     /**
      * Returns a power of two size for the given target capacity.
+     *
+     * 计算数组大小，返回2的幂，即扩容后的table大小
      */
     static final int tableSizeFor(int cap) {
         int n = cap - 1;
@@ -393,6 +398,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      * necessary. When allocated, length is always a power of two.
      * (We also tolerate length zero in some operations to allow
      * bootstrapping mechanics that are currently not needed.)
+     *
+     * Hashmap的底层数据结构，数组
      */
     transient Node<K,V>[] table;
 
@@ -404,6 +411,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
 
     /**
      * The number of key-value mappings contained in this map.
+     * HashMap中key-value的个数，即大小
      */
     transient int size;
 
@@ -413,12 +421,14 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      * the HashMap or otherwise modify its internal structure (e.g.,
      * rehash).  This field is used to make iterators on Collection-views of
      * the HashMap fail-fast.  (See ConcurrentModificationException).
+     *
+     * HashMap数据结构修改次数
      */
     transient int modCount;
 
     /**
      * The next size value at which to resize (capacity * load factor).
-     *
+     * HashMap扩容门限值，
      * @serial
      */
     // (The javadoc description is true upon serialization.
@@ -428,8 +438,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     int threshold;
 
     /**
-     * The load factor for the hash table.
-     *
+     * 加载因子，和性能有关
      * @serial
      */
     final float loadFactor;
@@ -586,11 +595,10 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     }
 
     /**
-     * Returns <tt>true</tt> if this map contains a mapping for the
-     * specified key.
+     * 是否包含指定的key
      *
-     * @param   key   The key whose presence in this map is to be tested
-     * @return <tt>true</tt> if this map contains a mapping for the specified
+     * @param   key   指定key
+     * @return 当Hashmap中含有指定的Key，返回true
      * key.
      */
     public boolean containsKey(Object key) {
@@ -614,18 +622,20 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     }
 
     /**
-     * Implements Map.put and related methods
+     * put方法的具体实现
      *
-     * @param hash hash for key
+     * @param hash key的hash值，
      * @param key the key
      * @param value the value to put
-     * @param onlyIfAbsent if true, don't change existing value
+     * @param onlyIfAbsent 如果为true，则不修改已存在的value
      * @param evict if false, the table is in creation mode.
      * @return previous value, or null if none
      */
     final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
                    boolean evict) {
+        // 声明变量, 使用局部变量名 代替直接使用全局变量名， 一种编程习惯
         Node<K,V>[] tab; Node<K,V> p; int n, i;
+        // 如果底层数组table没有初始化，则通过resize方法初始化数组
         if ((tab = table) == null || (n = tab.length) == 0)
             n = (tab = resize()).length;
         if ((p = tab[i = (n - 1) & hash]) == null)
@@ -676,50 +686,67 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      * @return the table
      */
     final Node<K,V>[] resize() {
+        // 使用局部变量持有table
         Node<K,V>[] oldTab = table;
         int oldCap = (oldTab == null) ? 0 : oldTab.length;
         int oldThr = threshold;
+        // 新容量、门限值
         int newCap, newThr = 0;
         if (oldCap > 0) {
+            // 如果原容量已经大于等于最大容量，则不在扩容
             if (oldCap >= MAXIMUM_CAPACITY) {
                 threshold = Integer.MAX_VALUE;
                 return oldTab;
             }
+            // 否则，翻倍扩容
             else if ((newCap = oldCap << 1) < MAXIMUM_CAPACITY &&
                      oldCap >= DEFAULT_INITIAL_CAPACITY)
-                newThr = oldThr << 1; // double threshold
+                newThr = oldThr << 1; // 门限值*2
         }
-        else if (oldThr > 0) // initial capacity was placed in threshold
+        else if (oldThr > 0) // 使用门限值初始化容量
             newCap = oldThr;
         else {               // zero initial threshold signifies using defaults
+            // 原容量和门限值都是非正数，使用默认缺省值初始化
             newCap = DEFAULT_INITIAL_CAPACITY;
             newThr = (int)(DEFAULT_LOAD_FACTOR * DEFAULT_INITIAL_CAPACITY);
         }
         if (newThr == 0) {
+            // 初始化新门限值
             float ft = (float)newCap * loadFactor;
             newThr = (newCap < MAXIMUM_CAPACITY && ft < (float)MAXIMUM_CAPACITY ?
                       (int)ft : Integer.MAX_VALUE);
         }
         threshold = newThr;
+
+        // 新建底层数组对象
         @SuppressWarnings({"rawtypes","unchecked"})
-            Node<K,V>[] newTab = (Node<K,V>[])new Node[newCap];
+        Node<K,V>[] newTab = (Node<K,V>[])new Node[newCap];
+        // 将新底层数组赋值给全局变量table
         table = newTab;
         if (oldTab != null) {
+            // 原数组不为null，数据迁移
             for (int j = 0; j < oldCap; ++j) {
                 Node<K,V> e;
                 if ((e = oldTab[j]) != null) {
                     oldTab[j] = null;
                     if (e.next == null)
+                        // 链表只有一个元素，hash取模，赋值
                         newTab[e.hash & (newCap - 1)] = e;
                     else if (e instanceof TreeNode)
+                        // 如果是Tree结构（链表长度>8时，会将链表转换成Tree，提高hashmap效率）
                         ((TreeNode<K,V>)e).split(this, newTab, j, oldCap);
                     else { // preserve order
+                        // 链表数据迁移
+                        // 低位链表
                         Node<K,V> loHead = null, loTail = null;
+                        // 高位链表
                         Node<K,V> hiHead = null, hiTail = null;
+                        // 下一节点引用
                         Node<K,V> next;
                         do {
                             next = e.next;
-                            if ((e.hash & oldCap) == 0) {
+                            if ((e.hash & oldCap ) == 0) {
+                                // TODO 重新创建低位链表
                                 if (loTail == null)
                                     loHead = e;
                                 else
@@ -727,6 +754,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                                 loTail = e;
                             }
                             else {
+                                // TODO 重新创建高位链表
                                 if (hiTail == null)
                                     hiHead = e;
                                 else
@@ -734,10 +762,15 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                                 hiTail = e;
                             }
                         } while ((e = next) != null);
+
+                        // 存在低位链表，则链表尾设置为null
+                        // 将链表放到新数组，索引j
                         if (loTail != null) {
                             loTail.next = null;
                             newTab[j] = loHead;
                         }
+                        // 存在高位链表，则链表尾设置为null
+                        // 将链表放到新数组，索引j + oldCap
                         if (hiTail != null) {
                             hiTail.next = null;
                             newTab[j + oldCap] = hiHead;
@@ -1057,6 +1090,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
         Node<K,V> e;
         return (e = getNode(hash(key), key)) == null ? defaultValue : e.value;
     }
+
 
     @Override
     public V putIfAbsent(K key, V value) {
