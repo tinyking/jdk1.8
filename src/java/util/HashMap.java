@@ -297,6 +297,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
         public final V getValue()      { return value; }
         public final String toString() { return key + "=" + value; }
 
+        // 重新hashCode方法，使用
         public final int hashCode() {
             return Objects.hashCode(key) ^ Objects.hashCode(value);
         }
@@ -307,6 +308,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
             return oldValue;
         }
 
+        // 伴随hashCode方法的重写
         public final boolean equals(Object o) {
             if (o == this)
                 return true;
@@ -563,6 +565,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      * @see #put(Object, Object)
      */
     public V get(Object key) {
+        // 使用三元运算符返回数据，以前自己写代码时没有用过，可以借鉴下
         Node<K,V> e;
         return (e = getNode(hash(key), key)) == null ? null : e.value;
     }
@@ -582,8 +585,11 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                 ((k = first.key) == key || (key != null && key.equals(k))))
                 return first;
             if ((e = first.next) != null) {
+                // 在1.8之后引入了平衡树，所以会判断是否为treenode
                 if (first instanceof TreeNode)
                     return ((TreeNode<K,V>)first).getTreeNode(hash, key);
+
+                // 源码中很多使用 do while的，相较与while会多一次默认执行
                 do {
                     if (e.hash == hash &&
                         ((k = e.key) == key || (key != null && key.equals(k))))
@@ -645,12 +651,14 @@ public class HashMap<K,V> extends AbstractMap<K,V>
             if (p.hash == hash &&
                 ((k = p.key) == key || (key != null && key.equals(k))))
                 e = p;
+            // TODO TreeNode通过多层集成，最近属于Node的子类
             else if (p instanceof TreeNode)
                 e = ((TreeNode<K,V>)p).putTreeVal(this, tab, hash, key, value);
             else {
                 for (int binCount = 0; ; ++binCount) {
                     if ((e = p.next) == null) {
                         p.next = newNode(hash, key, value, null);
+                        // TODO 新put的一个值后，链表长度如果>=8，就会将链表转换成平衡树
                         if (binCount >= TREEIFY_THRESHOLD - 1) // -1 for 1st
                             treeifyBin(tab, hash);
                         break;
@@ -788,10 +796,14 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      */
     final void treeifyBin(Node<K,V>[] tab, int hash) {
         int n, index; Node<K,V> e;
+        //
         if (tab == null || (n = tab.length) < MIN_TREEIFY_CAPACITY)
             resize();
+
+        // TODO e = tab[index = (n - 1) & hash] 获取对应的列表
         else if ((e = tab[index = (n - 1) & hash]) != null) {
             TreeNode<K,V> hd = null, tl = null;
+            // 将Node转换成Treenode， 继续使用do while循环
             do {
                 TreeNode<K,V> p = replacementTreeNode(e, null);
                 if (tl == null)

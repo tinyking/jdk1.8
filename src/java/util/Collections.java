@@ -366,6 +366,8 @@ public class Collections {
      *
      * This method runs in linear time.
      *
+     * 反转序列
+     *
      * @param  list the list whose elements are to be reversed.
      * @throws UnsupportedOperationException if the specified list or
      *         its list-iterator does not support the <tt>set</tt> operation.
@@ -417,6 +419,8 @@ public class Collections {
      * @param  list the list to be shuffled.
      * @throws UnsupportedOperationException if the specified list or
      *         its list-iterator does not support the <tt>set</tt> operation.
+     *
+     *  随机打乱顺序
      */
     public static void shuffle(List<?> list) {
         Random rnd = r;
@@ -489,6 +493,7 @@ public class Collections {
      * @since 1.4
      */
     @SuppressWarnings({"rawtypes", "unchecked"})
+    // 数据交换
     public static void swap(List<?> list, int i, int j) {
         // instead of using a raw type here, it's possible to capture
         // the wildcard but it will require a call to a supplementary
@@ -534,6 +539,8 @@ public class Collections {
     }
 
     /**
+     *
+     * 数据复制
      * Copies all of the elements from one list into another.  After the
      * operation, the index of each copied element in the destination list
      * will be identical to its index in the source list.  The destination
@@ -604,6 +611,7 @@ public class Collections {
     }
 
     /**
+     * 获取最小值
      * Returns the minimum element of the given collection, according to the
      * order induced by the specified comparator.  All elements in the
      * collection must be <i>mutually comparable</i> by the specified

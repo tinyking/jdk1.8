@@ -28,6 +28,8 @@ package java.io;
 /**
  * Utility methods for packing/unpacking primitive values in/out of byte arrays
  * using big-endian byte ordering.
+ *
+ * 装箱、拆箱
  */
 class Bits {
 

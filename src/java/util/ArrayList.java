@@ -1450,6 +1450,7 @@ public class ArrayList<E> extends AbstractList<E>
     @Override
     @SuppressWarnings("unchecked")
     public void sort(Comparator<? super E> c) {
+        // ArrayList本身属于非线程安全的数据结构。在数据进行排序重组时，如果同时存在多个排序，会提示并发异常
         final int expectedModCount = modCount;
         Arrays.sort((E[]) elementData, 0, size, c);
         if (modCount != expectedModCount) {
