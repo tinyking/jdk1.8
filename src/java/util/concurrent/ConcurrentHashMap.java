@@ -502,6 +502,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     /* ---------------- Constants -------------- */
 
     /**
+     * 最大容量
      * The largest possible table capacity.  This value must be
      * exactly 1<<30 to stay within Java array allocation and indexing
      * bounds for power of two table sizes, and is further required
@@ -511,6 +512,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     private static final int MAXIMUM_CAPACITY = 1 << 30;
 
     /**
+     * 默认初始容量。 2的幂
      * The default initial table capacity.  Must be a power of 2
      * (i.e., at least 1) and at most MAXIMUM_CAPACITY.
      */
@@ -529,6 +531,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     private static final int DEFAULT_CONCURRENCY_LEVEL = 16;
 
     /**
+     * 加载因子
      * The load factor for this table. Overrides of this value in
      * constructors affect only the initial table capacity.  The
      * actual floating point value isn't normally used -- it is
@@ -767,6 +770,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     /* ---------------- Fields -------------- */
 
     /**
+     * 线程可见
      * The array of bins. Lazily initialized upon first insertion.
      * Size is always a power of two. Accessed directly by iterators.
      */
@@ -785,6 +789,10 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     private transient volatile long baseCount;
 
     /**
+     * 用于数组的初始化和扩容控制
+     * 负数：数组正在初始化或扩容
+     * -1：初始化
+     * -（1 + 正在扩容的线程数量）：扩容
      * Table initialization and resizing control.  When negative, the
      * table is being initialized or resized: -1 for initialization,
      * else -(1 + the number of active resizing threads).  Otherwise,
@@ -1008,11 +1016,23 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
 
     /** Implementation for put and putIfAbsent */
     final V putVal(K key, V value, boolean onlyIfAbsent) {
+        // ConcurrentHashMap中key、value都不可以为null
         if (key == null || value == null) throw new NullPointerException();
+
+        // 计算hash
         int hash = spread(key.hashCode());
         int binCount = 0;
+
+        // 循环效率最高也需要执行3条汇编语句，而最慢需要5条汇编语句，
+        // 使用i--和i++进行循环控制时，不同的循环结构所对应的汇编代码量不同，
+        // 最少的为for循环，只需要3条汇编指令，最多的为while循环，需要5条汇编指令，
+        // 而当使用--i和++i进行循环控制时，无论哪一种循环结构执行效率都一样是最优的，
+        // 都只需要3条代码，而无论使用i--,--i,i++,++i中哪一种，for循环的效率应该是最高的，
+        // 都只用了3条汇编代码。
+        // https://www.cnblogs.com/tolimit/p/4236821.html
         for (Node<K,V>[] tab = table;;) {
             Node<K,V> f; int n, i, fh;
+            // 如果未初始化，则先初始化数组
             if (tab == null || (n = tab.length) == 0)
                 tab = initTable();
             else if ((f = tabAt(tab, i = (n - 1) & hash)) == null) {
@@ -2222,16 +2242,22 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      */
     private final Node<K,V>[] initTable() {
         Node<K,V>[] tab; int sc;
+        //
         while ((tab = table) == null || tab.length == 0) {
             if ((sc = sizeCtl) < 0)
+                // 判断sizeCtl，如果有其他线程正在初始化或扩容，则yield线程让步，让出cpu资源；yield后会通过cpu调度自动执行
                 Thread.yield(); // lost initialization race; just spin
             else if (U.compareAndSwapInt(this, SIZECTL, sc, -1)) {
+                // 通过cas获取锁，执行初始化table操作
                 try {
+                    // 再次检查table状态，volatile线程可见
                     if ((tab = table) == null || tab.length == 0) {
                         int n = (sc > 0) ? sc : DEFAULT_CAPACITY;
                         @SuppressWarnings("unchecked")
                         Node<K,V>[] nt = (Node<K,V>[])new Node<?,?>[n];
                         table = tab = nt;
+                        // >>> 无符号右移， 16 >>> 2 = 4
+                        // sc = 16 - 4 = 12
                         sc = n - (n >>> 2);
                     }
                 } finally {
