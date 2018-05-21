@@ -1037,6 +1037,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             if (tab == null || (n = tab.length) == 0)
                 tab = initTable();
             else if ((f = tabAt(tab, i = (n - 1) & hash)) == null) {
+                // 如果目标索引位置没有对象，直接cas
                 if (casTabAt(tab, i, null,
                              new Node<K,V>(hash, key, value, null)))
                     break;                   // no lock when adding to empty bin
@@ -1046,6 +1047,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             else {
                 V oldVal = null;
                 synchronized (f) {
+                    // 锁住链表头
                     if (tabAt(tab, i) == f) {
                         if (fh >= 0) {
                             binCount = 1;
@@ -1059,6 +1061,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                                         e.val = value;
                                     break;
                                 }
+                                // 遍历链表
                                 Node<K,V> pred = e;
                                 if ((e = e.next) == null) {
                                     pred.next = new Node<K,V>(hash, key,
@@ -1068,6 +1071,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                             }
                         }
                         else if (f instanceof TreeBin) {
+                            // 二叉树
                             Node<K,V> p;
                             binCount = 2;
                             if ((p = ((TreeBin<K,V>)f).putTreeVal(hash, key,
