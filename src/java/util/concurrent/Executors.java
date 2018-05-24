@@ -86,6 +86,7 @@ public class Executors {
      * @throws IllegalArgumentException if {@code nThreads <= 0}
      */
     public static ExecutorService newFixedThreadPool(int nThreads) {
+        // 创建固定大小的线程池
         return new ThreadPoolExecutor(nThreads, nThreads,
                                       0L, TimeUnit.MILLISECONDS,
                                       new LinkedBlockingQueue<Runnable>());
@@ -168,6 +169,7 @@ public class Executors {
      * @return the newly created single-threaded Executor
      */
     public static ExecutorService newSingleThreadExecutor() {
+        // 创建单线程的线程池
         return new FinalizableDelegatedExecutorService
             (new ThreadPoolExecutor(1, 1,
                                     0L, TimeUnit.MILLISECONDS,
@@ -213,6 +215,7 @@ public class Executors {
      * @return the newly created thread pool
      */
     public static ExecutorService newCachedThreadPool() {
+        // 初始化一个可以缓存线程的线程池，默认缓存60s，线程池的线程数可达到Integer.MAX_VALUE，即2147483647，内部使用SynchronousQueue作为阻塞队列
         return new ThreadPoolExecutor(0, Integer.MAX_VALUE,
                                       60L, TimeUnit.SECONDS,
                                       new SynchronousQueue<Runnable>());
@@ -248,6 +251,7 @@ public class Executors {
      * @return the newly created scheduled executor
      */
     public static ScheduledExecutorService newSingleThreadScheduledExecutor() {
+        // 初始化的线程池可以在指定的时间内周期性的执行所提交的任务，在实际的业务场景中可以使用该线程池定期的同步数据。
         return new DelegatedScheduledExecutorService
             (new ScheduledThreadPoolExecutor(1));
     }
